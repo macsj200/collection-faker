@@ -1,3 +1,7 @@
+Npm.depends({
+  'faker':'3.1.0',
+});
+
 Package.describe({
   name: 'maxjohansen:collection-faker',
   version: '0.0.1',
