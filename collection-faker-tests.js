@@ -2,7 +2,7 @@
 import { Tinytest } from "meteor/tinytest";
 
 // Import and rename a variable exported by collection-faker.js.
-import { name as packageName } from "meteor/collection-faker";
+import { name as packageName } from "meteor/maxjohansen:collection-faker";
 
 // Write your tests here!
 // Here is an example.
