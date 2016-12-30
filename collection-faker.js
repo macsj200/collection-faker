@@ -39,31 +39,58 @@ export const genFakeItem = (options) => {
       return val;
     }
     else if(schema[key].type === String){
-      if(key.includes('images')){
+      if(key.toLowerCase().includes('image') || key.toLowerCase().includes('picture')){
         return faker.image.image();
+      }
+      else if(key === 'firstName'){
+        return faker.name.firstName();
+      }
+      else if(key === 'lastName'){
+        return faker.name.lastName();
+      }
+      else if(key.startsWith('address')){
+        return faker.address[key.slice(key.indexOf('address') + 'address'.length + 1)]();
+      }
+      else if(schema[key].min >= 200) {
+        return faker.lorem.paragraph();
       }
       else {
         return faker.lorem.word();
       }
     } else if(schema[key].type === Number){
       return faker.random.number();
+    } else if(schema[key].type === Date){
+      return new Date();
+    } else if(schema[key].type === Boolean) {
+      return faker.random.boolean();
     }
   }
 
   let fakeItem = {};
 
   _.forOwn(schema, (value, key) => {
-    if(value.type === Array){
+    if(value.type === Array || value.type === Object){
       return;
     }
     else if(key.includes('.$')){
-      const arrKey = key.slice(0,-2);
+      const arrKey = key.slice(0,key.indexOf('.$'));
+      const marginSize = '.$.'.length;
+      const theRestOfTheKey = key.slice(key.indexOf('.$') + marginSize);
+
       if(!fakeItem[arrKey]) {
         _.set(fakeItem, arrKey, []);
       }
 
-      _.times(numArrayElements, () => {
-        fakeItem[arrKey].push(parseKey(key));
+      _.times(numArrayElements, (i) => {
+        if(theRestOfTheKey === ''){
+          fakeItem[arrKey].push(parseKey(key));
+        }
+        else {
+          if(!fakeItem[arrKey][i]) {
+            fakeItem[arrKey].push({});
+          }
+          _.set(fakeItem[arrKey][i], theRestOfTheKey, parseKey(key));
+        }
       });
     }
     else {
