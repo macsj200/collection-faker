@@ -19,6 +19,6 @@ Package.onUse(function(api) {
 Package.onTest(function(api) {
   api.use('ecmascript');
   api.use('tinytest');
-  api.use('collection-faker');
+  api.use('maxjohansen:collection-faker');
   api.mainModule('collection-faker-tests.js');
 });
