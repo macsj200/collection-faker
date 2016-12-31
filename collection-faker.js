@@ -66,6 +66,9 @@ export const genFakeItem = (options) => {
       else if(key.startsWith('address')){
         return faker.address[key.slice(key.indexOf('address') + 'address'.length + 1)]();
       }
+      else if(key.startsWith('locations.$')){
+        return faker.address[key.slice(key.indexOf('locations.$') + 'locations.$'.length + 1)]();
+      }
       else if(schema[key].min >= 200) {
         return faker.lorem.paragraph();
       }
