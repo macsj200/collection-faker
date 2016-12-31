@@ -23,13 +23,13 @@ export const genFakeUser = (options) => {
 };
 
 const isLinkedField = (collection, field) => {
-  let toggle = false;
+  let linkName;
   _.forOwn(collection.getLinks(), (value, key) => {
     if(field === value.linkConfig.field){
-      toggle = true;
+      linkName = value.linkName;
     }
   });
-  return toggle;
+  return linkName;
 };
 
 // This returns a fake item from the specified collection ready to be inserted
@@ -41,8 +41,13 @@ export const genFakeItem = (options) => {
   const schema = collection.simpleSchema()['_schema'];
 
   function parseKey(key){
-    if(key === 'createdById'){
-      return options.userId;
+    const linkName = isLinkedField(collection, key);
+    if(linkName){
+      return genFakeItem({
+        collection: collection.getLink(null,linkName).linkedCollection,
+        numItems,
+        numArrayElements,
+      });
     }
     else if(schema[key].allowedValues){
       const val = faker.random.arrayElement(schema[key].allowedValues);
