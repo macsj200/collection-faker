@@ -22,6 +22,16 @@ export const genFakeUser = (options) => {
   };
 };
 
+const isLinkedField = (collection, field) => {
+  let toggle = false;
+  _.forOwn(collection.getLinks(), (value, key) => {
+    if(field === value.linkConfig.field){
+      toggle = true;
+    }
+  });
+  return toggle;
+};
+
 // This returns a fake item from the specified collection ready to be inserted
 export const genFakeItem = (options) => {
   const collection = options.collection;
