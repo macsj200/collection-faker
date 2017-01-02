@@ -3,7 +3,7 @@ import { Accounts } from 'meteor/accounts-base'
 import {Meteor} from 'meteor/meteor';
 import _ from 'lodash';
 
-const insertLinkedCollection = (collection, doc) => {
+const insertIntoCollection = (collection, doc) => {
   if(collection === Meteor.users){
     let email;
     let password = 'password';
@@ -22,7 +22,9 @@ const insertLinkedCollection = (collection, doc) => {
     };
     return Accounts.createUser(userObject);
   } else {
-    return collection.insert(doc);
+    return collection.insert(doc, {
+      getAutoValues: false,
+    });
   }
 };
 
@@ -39,7 +41,6 @@ const isLinkedField = (collection, field) => {
 // This returns a fake item from the specified collection ready to be inserted
 export const genFakeItem = (options) => {
   const collection = options.collection;
-  const numItems = options.numItems || 20;
   const numArrayElements = options.numArrayElements || 10;
 
   const schema = collection.simpleSchema()['_schema'];
@@ -49,10 +50,9 @@ export const genFakeItem = (options) => {
     if(linkName){
       const linkedFakeItem = genFakeItem({
         collection: collection.getLink(null,linkName).linkedCollection,
-        numItems,
         numArrayElements,
       });
-      return insertLinkedCollection(collection.getLink(null,linkName).linkedCollection, linkedFakeItem);
+      return insertIntoCollection(collection.getLink(null,linkName).linkedCollection, linkedFakeItem);
     }
     else if(schema[key].allowedValues){
       const val = faker.random.arrayElement(schema[key].allowedValues);
@@ -117,10 +117,9 @@ export const genFakeItem = (options) => {
             fakeItem[arrKey].push({});
           }
           if(linkName && key.endsWith('_id')){
-            _.set(fakeItem[arrKey][i], theRestOfTheKey, insertLinkedCollection(collection.getLink(null,linkName)
-              .linkedCollection,genFakeItem({
+            _.set(fakeItem[arrKey][i], theRestOfTheKey, insertIntoCollection(collection.getLink(null,linkName)
+            .linkedCollection,genFakeItem({
               collection: collection.getLink(null,linkName).linkedCollection,
-              numItems,
               numArrayElements,
             })));
           }
@@ -134,9 +133,8 @@ export const genFakeItem = (options) => {
       if(key.endsWith('_id')){
         const linkName = isLinkedField(collection, key.slice(0,key.indexOf('._id')));
         if(linkName) {
-          _.set(fakeItem, key, insertLinkedCollection(collection.getLink(null,linkName).linkedCollection,genFakeItem({
+          _.set(fakeItem, key, insertIntoCollection(collection.getLink(null,linkName).linkedCollection,genFakeItem({
             collection: collection.getLink(null,linkName).linkedCollection,
-            numItems,
             numArrayElements,
           })));
         }
@@ -148,4 +146,17 @@ export const genFakeItem = (options) => {
   });
 
   return fakeItem;
+};
+
+export const seedCollections = (collectionsToSeed, options) => {
+  if(Meteor.settings.SeedDatabase && (options.forceSeed || (true && true))){
+    collectionsToSeed.map((collection) => {
+      _.times(options.numItemsPerCollection || 20, () => {
+        insertIntoCollection(collection, genFakeItem({
+          numArrayElements: options.numArrayElements || 5,
+          collection,
+        }));
+      });
+    });
+  }
 };
