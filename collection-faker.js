@@ -149,14 +149,19 @@ export const genFakeItem = (options) => {
 };
 
 export const seedCollections = (collectionsToSeed, options) => {
-  if(Meteor.settings.SeedDatabase && (options.forceSeed || (true && true))){
+  if(Meteor.settings.SeedDatabase){
     collectionsToSeed.map((collection) => {
-      _.times(options.numItemsPerCollection || 20, () => {
-        insertIntoCollection(collection, genFakeItem({
-          numArrayElements: options.numArrayElements || 5,
-          collection,
-        }));
-      });
+      if(collection.find({}).count() === 0){
+        console.log(`Seeding collection ${collection._name}`);
+        _.times(options.numItemsPerCollection || 20, () => {
+          insertIntoCollection(collection, genFakeItem({
+            numArrayElements: options.numArrayElements || 5,
+            collection,
+          }));
+        });
+      } else {
+        console.log(`Collection ${collection._name} is populated, skipping seed`);
+      }
     });
   }
 };
