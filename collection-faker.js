@@ -43,11 +43,12 @@ export const genFakeItem = (options) => {
   function parseKey(key){
     const linkName = isLinkedField(collection, key);
     if(linkName){
-      return genFakeItem({
+      const linkedFakeItem = genFakeItem({
         collection: collection.getLink(null,linkName).linkedCollection,
         numItems,
         numArrayElements,
       });
+      return collection.getLink(null,linkName).linkedCollection.insert(linkedFakeItem);
     }
     else if(schema[key].allowedValues){
       const val = faker.random.arrayElement(schema[key].allowedValues);
@@ -60,6 +61,9 @@ export const genFakeItem = (options) => {
       else if(key === 'firstName'){
         return faker.name.firstName();
       }
+      else if(key.toLowerCase().includes('email')){
+        return faker.internet.email();
+      }
       else if(key === 'lastName'){
         return faker.name.lastName();
       }
@@ -70,7 +74,7 @@ export const genFakeItem = (options) => {
         return faker.address[key.slice(key.indexOf('locations.$') + 'locations.$'.length + 1)]();
       }
       else if(schema[key].min >= 200) {
-        return faker.lorem.paragraph();
+        return faker.lorem.paragraph(10);
       }
       else {
         return faker.lorem.word();
@@ -100,6 +104,7 @@ export const genFakeItem = (options) => {
       }
 
       _.times(numArrayElements, (i) => {
+        const linkName = isLinkedField(collection, arrKey);
         if(theRestOfTheKey === ''){
           fakeItem[arrKey].push(parseKey(key));
         }
@@ -107,7 +112,16 @@ export const genFakeItem = (options) => {
           if(!fakeItem[arrKey][i]) {
             fakeItem[arrKey].push({});
           }
-          _.set(fakeItem[arrKey][i], theRestOfTheKey, parseKey(key));
+          if(linkName && key.endsWith('_id')){
+            _.set(fakeItem[arrKey][i], theRestOfTheKey, collection.getLink(null,linkName).linkedCollection.insert(genFakeItem({
+              collection: collection.getLink(null,linkName).linkedCollection,
+              numItems,
+              numArrayElements,
+            })));
+          }
+          else {
+            _.set(fakeItem[arrKey][i], theRestOfTheKey, parseKey(key));
+          }
         }
       });
     }
