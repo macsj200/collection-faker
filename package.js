@@ -17,7 +17,7 @@ Package.describe({
 Package.onUse(function(api) {
   api.versionsFrom('1.4.2.3');
   api.use('ecmascript');
-  api.mainModule('collection-faker.js');
+  api.mainModule('collection-faker.js','server');
 });
 
 Package.onTest(function(api) {
