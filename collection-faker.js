@@ -3,23 +3,27 @@ import { Accounts } from 'meteor/accounts-base'
 import {Meteor} from 'meteor/meteor';
 import _ from 'lodash';
 
-// Write your package code here!
+const insertLinkedCollection = (collection, doc) => {
+  if(collection === Meteor.users){
+    let email;
+    let password = 'password';
 
-// Variables exported by this module can be imported by other packages and
-// applications. See collection-faker-tests.js for an example of importing.
-export const name = 'collection-faker';
+    if(doc.emails && doc.emails.length !== 0){
+      email = doc.emails[0].address;
+    }
+    else {
+      email = faker.internet.email();
+    }
 
-// This returns a user object ready to be inserted via Accounts.createUser
-export const genFakeUser = (options) => {
-  const email = options.email || faker.internet.email();
-  const password = options.password || 'password';
-  const profile = options.profile || {};
-
-  return {
-    email,
-    password,
-    profile,
-  };
+    const userObject = {
+      profile:doc,
+      email,
+      password,
+    };
+    return Accounts.createUser(userObject);
+  } else {
+    return collection.insert(doc);
+  }
 };
 
 const isLinkedField = (collection, field) => {
@@ -48,7 +52,7 @@ export const genFakeItem = (options) => {
         numItems,
         numArrayElements,
       });
-      return collection.getLink(null,linkName).linkedCollection.insert(linkedFakeItem);
+      return insertLinkedCollection(collection.getLink(null,linkName).linkedCollection, linkedFakeItem);
     }
     else if(schema[key].allowedValues){
       const val = faker.random.arrayElement(schema[key].allowedValues);
@@ -113,7 +117,8 @@ export const genFakeItem = (options) => {
             fakeItem[arrKey].push({});
           }
           if(linkName && key.endsWith('_id')){
-            _.set(fakeItem[arrKey][i], theRestOfTheKey, collection.getLink(null,linkName).linkedCollection.insert(genFakeItem({
+            _.set(fakeItem[arrKey][i], theRestOfTheKey, insertLinkedCollection(collection.getLink(null,linkName)
+              .linkedCollection,genFakeItem({
               collection: collection.getLink(null,linkName).linkedCollection,
               numItems,
               numArrayElements,
@@ -129,7 +134,7 @@ export const genFakeItem = (options) => {
       if(key.endsWith('_id')){
         const linkName = isLinkedField(collection, key.slice(0,key.indexOf('._id')));
         if(linkName) {
-          _.set(fakeItem, key, collection.getLink(null,linkName).linkedCollection.insert(genFakeItem({
+          _.set(fakeItem, key, insertLinkedCollection(collection.getLink(null,linkName).linkedCollection,genFakeItem({
             collection: collection.getLink(null,linkName).linkedCollection,
             numItems,
             numArrayElements,
