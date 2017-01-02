@@ -126,7 +126,19 @@ export const genFakeItem = (options) => {
       });
     }
     else {
-      _.set(fakeItem, key, parseKey(key));
+      if(key.endsWith('_id')){
+        const linkName = isLinkedField(collection, key.slice(0,key.indexOf('._id')));
+        if(linkName) {
+          _.set(fakeItem, key, collection.getLink(null,linkName).linkedCollection.insert(genFakeItem({
+            collection: collection.getLink(null,linkName).linkedCollection,
+            numItems,
+            numArrayElements,
+          })));
+        }
+      }
+      else {
+        _.set(fakeItem, key, parseKey(key));
+      }
     }
   });
 
