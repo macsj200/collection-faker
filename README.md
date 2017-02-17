@@ -12,7 +12,13 @@ meteor add maxjohansen:collection-faker
 ---------------
 Sample usage
 ---------------
-
+Add `SeedDatabase` to your settings.json file 
+```
+{ 
+    "SeedDatabase" : true 
+}
+```
+Then 
 ```
 import {seedCollections} from "meteor/maxjohansen:collection-faker";
 
@@ -21,3 +27,4 @@ seedCollections(collectionsToSeed, {
   numItemsPerCollection:15,
 });
 ```
+
