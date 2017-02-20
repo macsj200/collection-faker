@@ -19,6 +19,7 @@ const insertIntoCollection = (collection, doc) => {
       profile:doc,
       email,
       password,
+      ...doc
     };
     return Accounts.createUser(userObject);
   } else {
@@ -72,7 +73,7 @@ export const genFakeItem = (options) => {
         return faker.name.lastName();
       }
       else if(key.startsWith('address')){
-        return faker.address[key.slice(key.indexOf('address') + 'address'.length + 1)]();
+        return faker.address[key.slice(key.indexOf('.') + 1)]();
       }
       else if(key.startsWith('locations.$')){
         return faker.address[key.slice(key.indexOf('locations.$') + 'locations.$'.length + 1)]();
@@ -93,7 +94,6 @@ export const genFakeItem = (options) => {
   }
 
   let fakeItem = {};
-
   _.forOwn(schema, (value, key) => {
     if(value.type === Array || value.type === Object){
       return;
@@ -103,28 +103,28 @@ export const genFakeItem = (options) => {
       const marginSize = '.$.'.length;
       const theRestOfTheKey = key.slice(key.indexOf('.$') + marginSize);
 
-      if(!fakeItem[arrKey]) {
+      if(!_.get(fakeItem,arrKey)) {
         _.set(fakeItem, arrKey, []);
       }
 
       _.times(numArrayElements, (i) => {
         const linkName = isLinkedField(collection, arrKey);
         if(theRestOfTheKey === ''){
-          fakeItem[arrKey].push(parseKey(key));
+          _.get(fakeItem,arrKey).push(parseKey(key));
         }
         else {
-          if(!fakeItem[arrKey][i]) {
-            fakeItem[arrKey].push({});
+          if(!_.get(fakeItem,arrKey)[i]) {
+            _.get(fakeItem,arrKey).push({});
           }
           if(linkName && key.endsWith('_id')){
-            _.set(fakeItem[arrKey][i], theRestOfTheKey, insertIntoCollection(collection.getLink(null,linkName)
+            _.set(_.get(fakeItem,arrKey)[i], theRestOfTheKey, insertIntoCollection(collection.getLink(null,linkName)
             .linkedCollection,genFakeItem({
               collection: collection.getLink(null,linkName).linkedCollection,
               numArrayElements,
             })));
           }
           else {
-            _.set(fakeItem[arrKey][i], theRestOfTheKey, parseKey(key));
+            _.set(_.get(fakeItem,arrKey)[i], theRestOfTheKey, parseKey(key));
           }
         }
       });
