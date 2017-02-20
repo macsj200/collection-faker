@@ -85,6 +85,12 @@ export const genFakeItem = (options) => {
         return faker.lorem.word();
       }
     } else if(schema[key].type === Number){
+      if(schema[key].min && schema[key].max){
+        return faker.random.number({
+          min:schema[key].min,
+          max:schema[key].max,
+        });
+      }
       return faker.random.number();
     } else if(schema[key].type === Date){
       return new Date();
