@@ -43,6 +43,7 @@ const isLinkedField = (collection, field) => {
 export const genFakeItem = (options) => {
   const collection = options.collection;
   const numArrayElements = options.numArrayElements || 10;
+  const codependents = options.codependents || [];
 
   const schema = collection.simpleSchema()['_schema'];
 
@@ -151,6 +152,35 @@ export const genFakeItem = (options) => {
     }
   });
 
+// codeps second pass
+  let alreadyDone = [];
+  _.forOwn(fakeItem, (value, key) => {
+    if(alreadyDone.indexOf(key) !== -1){
+      return;
+    }
+
+    let codependent;
+
+    for(let i = 0; i < codependents.length; i++){
+      if(codependents[i].keys.indexOf(key) !== -1){
+        codependent = codependents[i];
+        break;
+      }
+    }
+
+    if(codependent){
+      const argsBucket = codependent.keys.map((codepKey) => {
+          return fakeItem[codepKey];
+      });
+      const newVals = codependent.reducer(...argsBucket);
+      newVals.map((newVal) => {
+        const codepKey = Object.keys(newVal)[0];
+        fakeItem[codepKey] = newVal[codepKey];
+      });
+      alreadyDone = alreadyDone.concat(codependent.keys);
+    }
+  });
+
   return fakeItem;
 };
 
@@ -163,6 +193,7 @@ export const seedCollections = (collectionsToSeed, options) => {
           insertIntoCollection(collection, genFakeItem({
             numArrayElements: options.numArrayElements || 5,
             collection,
+            codependents:options.codependents,
           }));
         });
       } else {
