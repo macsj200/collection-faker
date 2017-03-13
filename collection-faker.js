@@ -21,7 +21,8 @@ const insertIntoCollection = (collection, doc) => {
       password,
       ...doc
     };
-    return Accounts.createUser(userObject);
+    const userId = Accounts.createUser(userObject);
+    return userId;
   } else {
     return collection.insert(doc, {
       getAutoValues: false,
@@ -43,17 +44,41 @@ const isLinkedField = (collection, field) => {
 export const genFakeItem = (options) => {
   const collection = options.collection;
   const numArrayElements = options.numArrayElements || 10;
+  const maxRecursionDepth = options.maxRecursionDepth || 3;
+
+  let currentRecursionDepth = options.currentRecursionDepth || 0;
+
+  if(collection.simpleSchema() === null){
+      //console.log(collection._name, collection.simpleSchema(), currentRecursionDepth, 'boop');
+      //return null;
+  }
 
   const schema = collection.simpleSchema()['_schema'];
 
+
   function parseKey(key){
-    const linkName = isLinkedField(collection, key);
+    let linkName;
+    if(key.endsWith('._id')){
+        linkName = isLinkedField(collection, key.slice(0, key.indexOf("._id")));
+    } else {
+        linkName = isLinkedField(collection, key);
+    }
     if(linkName){
+      const link = collection.getLink(null, linkName);
+      if(link.linkedCollection === collection){
+        //console.log('recursive field', linkName);
+        currentRecursionDepth++;
+        if(currentRecursionDepth > maxRecursionDepth){
+            //console.log('recursion limit reached', linkName);
+            return;
+        }
+      }
       const linkedFakeItem = genFakeItem({
-        collection: collection.getLink(null,linkName).linkedCollection,
+        collection: link.linkedCollection,
+        currentRecursionDepth,
         numArrayElements,
       });
-      return insertIntoCollection(collection.getLink(null,linkName).linkedCollection, linkedFakeItem);
+      return insertIntoCollection(link.linkedCollection, linkedFakeItem);
     }
     else if(schema[key].allowedValues){
       const val = faker.random.arrayElement(schema[key].allowedValues);
@@ -122,32 +147,12 @@ export const genFakeItem = (options) => {
           if(!_.get(fakeItem,arrKey)[i]) {
             _.get(fakeItem,arrKey).push({});
           }
-          if(linkName && key.endsWith('_id')){
-            _.set(_.get(fakeItem,arrKey)[i], theRestOfTheKey, insertIntoCollection(collection.getLink(null,linkName)
-            .linkedCollection,genFakeItem({
-              collection: collection.getLink(null,linkName).linkedCollection,
-              numArrayElements,
-            })));
-          }
-          else {
-            _.set(_.get(fakeItem,arrKey)[i], theRestOfTheKey, parseKey(key));
-          }
+          _.set(_.get(fakeItem,arrKey)[i], theRestOfTheKey, parseKey(key));
         }
       });
     }
     else {
-      if(key.endsWith('_id')){
-        const linkName = isLinkedField(collection, key.slice(0,key.indexOf('._id')));
-        if(linkName) {
-          _.set(fakeItem, key, insertIntoCollection(collection.getLink(null,linkName).linkedCollection,genFakeItem({
-            collection: collection.getLink(null,linkName).linkedCollection,
-            numArrayElements,
-          })));
-        }
-      }
-      else {
-        _.set(fakeItem, key, parseKey(key));
-      }
+      _.set(fakeItem, key, parseKey(key));
     }
   });
 
