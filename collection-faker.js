@@ -9,7 +9,13 @@ const insertIntoCollection = (collection, doc) => {
     let email;
     let password = 'password';
 
-    if(doc.emails && doc.emails.length !== 0){
+    if(Meteor.users.find().count() === 0){
+        email = 'test@test.com';
+        if(doc.emails){
+            doc.emails[0] = email;
+        }
+    }
+    else if(doc.emails && doc.emails.length !== 0){
       email = doc.emails[0].address;
     }
     else {
@@ -44,17 +50,17 @@ const isLinkedField = (collection, field) => {
 linksToDealWith = [];
 
 // This returns a fake item from the specified collection ready to be inserted
-export const genFakeItem = (options) => {
-  const collection = options.collection;
-  const numArrayElements = options.numArrayElements || 10;
-  const maxRecursionDepth = options.maxRecursionDepth || 3;
-  const generateLogic = options.generateLogic || {};
-
-  let currentRecursionDepth = options.currentRecursionDepth || 0;
-
+export const genFakeItem = ({
+    collection,
+    numArrayElements = 5,
+    maxRecursionDepth = 3,
+    currentRecursionDepth = 0,
+    preseededItem = {},
+} = {}) => {
   const schema = collection.simpleSchema()['_schema'];
+  console.log(preseededItem);
 
-  let fakeItem = {};
+  let fakeItem = {...preseededItem};
 
   function parseKey(key){
     let linkName;
@@ -75,9 +81,9 @@ export const genFakeItem = (options) => {
       }
       const linkedFakeItem = genFakeItem({
         collection: link.linkedCollection,
-        currentRecursionDepth,
         numArrayElements,
-        generateLogic,
+        maxRecursionDepth,
+        currentRecursionDepth,
       });
       
       linksToDealWith.push({item: fakeItem, key});
@@ -134,6 +140,9 @@ export const genFakeItem = (options) => {
     }
     else if(key.includes('.$')){
       const arrKey = key.slice(0,key.indexOf('.$'));
+      if(arrKey in preseededItem){
+          return;
+      }
       const marginSize = '.$.'.length;
       const theRestOfTheKey = key.slice(key.indexOf('.$') + marginSize);
 
@@ -155,6 +164,9 @@ export const genFakeItem = (options) => {
       });
     }
     else {
+      if(key in preseededItem){
+          return;
+      }
       _.set(fakeItem, key, parseKey(key));
     }
   });
@@ -162,9 +174,13 @@ export const genFakeItem = (options) => {
   return fakeItem;
 };
 
-export const seedCollection = (collection, options) => {
-  const generateLogic = options.generateLogic || {};
-  generateLogic.mutators = generateLogic.mutators || [];
+export const seedCollection = ({
+    collection,
+    numItemsPerCollection = 20,
+    numArrayElements = 5,
+    preseed = [],
+    mutators = [],
+} = {}) => {
   if(Meteor.settings.SeedDatabase){
     if(Meteor.settings.clearDbBeforeSeed){
         console.log('clearDbBeforeSeed set, clearing db');
@@ -172,14 +188,15 @@ export const seedCollection = (collection, options) => {
     }
       if(collection.find({}).count() === 0){
         console.log(`Seeding collection ${collection._name}`);
-        _.times(options.numItemsPerCollection || 20, () => {
+        _.times(numItemsPerCollection, () => {
+          let preseededItem = preseed.pop();
           insertIntoCollection(collection, genFakeItem({
-            numArrayElements: options.numArrayElements || 5,
+            numArrayElements,
             collection,
-            generateLogic: options.generateLogic || {},
+            preseededItem,
           }));
         });
-        generateLogic.mutators.forEach((mutator) => {
+        mutators.forEach((mutator) => {
             collection.find(mutator.mutateSelector).forEach((item) => {
                 collection.update(item._id, {$set: mutator.mutate(item)});
             });
