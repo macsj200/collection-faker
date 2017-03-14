@@ -58,7 +58,6 @@ export const genFakeItem = ({
     preseededItem = {},
 } = {}) => {
   const schema = collection.simpleSchema()['_schema'];
-  console.log(preseededItem);
 
   let fakeItem = {...preseededItem};
 
