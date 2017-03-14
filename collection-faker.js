@@ -41,6 +41,8 @@ const isLinkedField = (collection, field) => {
   return linkName;
 };
 
+linksToDealWith = [];
+
 // This returns a fake item from the specified collection ready to be inserted
 export const genFakeItem = (options) => {
   const collection = options.collection;
@@ -52,6 +54,7 @@ export const genFakeItem = (options) => {
 
   const schema = collection.simpleSchema()['_schema'];
 
+  let fakeItem = {};
 
   function parseKey(key){
     let linkName;
@@ -76,6 +79,9 @@ export const genFakeItem = (options) => {
         numArrayElements,
         generateLogic,
       });
+      
+      linksToDealWith.push({item: fakeItem, key});
+
       return insertIntoCollection(link.linkedCollection, linkedFakeItem);
     }
     else if(schema[key].allowedValues){
@@ -122,7 +128,6 @@ export const genFakeItem = (options) => {
     }
   }
 
-  let fakeItem = {};
   _.forOwn(schema, (value, key) => {
     if(value.type === Array || value.type === Object){
       return;
@@ -154,25 +159,17 @@ export const genFakeItem = (options) => {
     }
   });
 
-
-  if(generateLogic[collection._name]){
-      const mutators = generateLogic[collection._name].mutators;
-      mutators.forEach((mutator) => {
-          collection.find(mutator.mutateSelector).forEach((item) => {
-              collection.update(item._id, {$set: mutator.mutate(item)});
-          });
-      });
-  }
   return fakeItem;
 };
 
-export const seedCollections = (collectionsToSeed, options) => {
+export const seedCollection = (collection, options) => {
+  const generateLogic = options.generateLogic || {};
+  generateLogic.mutators = generateLogic.mutators || [];
   if(Meteor.settings.SeedDatabase){
     if(Meteor.settings.clearDbBeforeSeed){
         console.log('clearDbBeforeSeed set, clearing db');
         resetDatabase();
     }
-    collectionsToSeed.map((collection) => {
       if(collection.find({}).count() === 0){
         console.log(`Seeding collection ${collection._name}`);
         _.times(options.numItemsPerCollection || 20, () => {
@@ -182,9 +179,13 @@ export const seedCollections = (collectionsToSeed, options) => {
             generateLogic: options.generateLogic || {},
           }));
         });
+        generateLogic.mutators.forEach((mutator) => {
+            collection.find(mutator.mutateSelector).forEach((item) => {
+                collection.update(item._id, {$set: mutator.mutate(item)});
+            });
+        });
       } else {
         console.log(`Collection ${collection._name} is populated, skipping seed`);
       }
-    });
   }
 };
