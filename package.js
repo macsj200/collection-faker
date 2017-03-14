@@ -17,6 +17,7 @@ Package.describe({
 Package.onUse(function(api) {
   api.versionsFrom('1.4.2.3');
   api.use('ecmascript');
+  api.use('xolvio:cleaner@0.3.1');
   api.mainModule('collection-faker.js','server');
 });
 

@@ -2,6 +2,7 @@ import faker from 'faker';
 import { Accounts } from 'meteor/accounts-base'
 import {Meteor} from 'meteor/meteor';
 import _ from 'lodash';
+import { resetDatabase } from 'meteor/xolvio:cleaner';
 
 const insertIntoCollection = (collection, doc) => {
   if(collection === Meteor.users){
@@ -45,13 +46,9 @@ export const genFakeItem = (options) => {
   const collection = options.collection;
   const numArrayElements = options.numArrayElements || 10;
   const maxRecursionDepth = options.maxRecursionDepth || 3;
+  const generateLogic = options.generateLogic || {};
 
   let currentRecursionDepth = options.currentRecursionDepth || 0;
-
-  if(collection.simpleSchema() === null){
-      //console.log(collection._name, collection.simpleSchema(), currentRecursionDepth, 'boop');
-      //return null;
-  }
 
   const schema = collection.simpleSchema()['_schema'];
 
@@ -77,6 +74,7 @@ export const genFakeItem = (options) => {
         collection: link.linkedCollection,
         currentRecursionDepth,
         numArrayElements,
+        generateLogic,
       });
       return insertIntoCollection(link.linkedCollection, linkedFakeItem);
     }
@@ -156,11 +154,19 @@ export const genFakeItem = (options) => {
     }
   });
 
+
+  if(generateLogic[collection._name]){
+      generateLogic[collection._name](fakeItem);
+  }
   return fakeItem;
 };
 
 export const seedCollections = (collectionsToSeed, options) => {
   if(Meteor.settings.SeedDatabase){
+    if(Meteor.settings.clearDbBeforeSeed){
+        console.log('clearDbBeforeSeed set, clearing db');
+        resetDatabase();
+    }
     collectionsToSeed.map((collection) => {
       if(collection.find({}).count() === 0){
         console.log(`Seeding collection ${collection._name}`);
@@ -168,6 +174,7 @@ export const seedCollections = (collectionsToSeed, options) => {
           insertIntoCollection(collection, genFakeItem({
             numArrayElements: options.numArrayElements || 5,
             collection,
+            generateLogic: options.generateLogic || {},
           }));
         });
       } else {
