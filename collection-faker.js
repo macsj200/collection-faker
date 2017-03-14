@@ -156,7 +156,12 @@ export const genFakeItem = (options) => {
 
 
   if(generateLogic[collection._name]){
-      generateLogic[collection._name](fakeItem);
+      const mutators = generateLogic[collection._name].mutators;
+      mutators.forEach((mutator) => {
+          collection.find(mutator.mutateSelector).forEach((item) => {
+              collection.update(item._id, {$set: mutator.mutate(item)});
+          });
+      });
   }
   return fakeItem;
 };
