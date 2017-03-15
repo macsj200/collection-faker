@@ -5,6 +5,8 @@ import _ from 'lodash';
 import { resetDatabase } from 'meteor/xolvio:cleaner';
 
 const insertIntoCollection = (collection, doc) => {
+  let docId;
+  
   if(collection === Meteor.users){
     let email;
     let password = 'password';
@@ -28,16 +30,18 @@ const insertIntoCollection = (collection, doc) => {
       password,
       ...doc
     };
-    const userId = Accounts.createUser(userObject);
-    return userId;
+
+    docId = Accounts.createUser(userObject);
   } else {
-    return collection.insert(doc, {
+    docId = collection.insert(doc, {
       getAutoValues: false,
     });
   }
+
+  return docId;
 };
 
-const isLinkedField = (collection, field) => {
+const getLinkName = (collection, field) => {
   let linkName;
   _.forOwn(collection.getLinks(), (value, key) => {
     if(field === value.linkConfig.field){
@@ -46,8 +50,6 @@ const isLinkedField = (collection, field) => {
   });
   return linkName;
 };
-
-linksToDealWith = [];
 
 // This returns a fake item from the specified collection ready to be inserted
 export const genFakeItem = ({
@@ -64,9 +66,9 @@ export const genFakeItem = ({
   function parseKey(key){
     let linkName;
     if(key.endsWith('._id')){
-        linkName = isLinkedField(collection, key.slice(0, key.indexOf("._id")));
+        linkName = getLinkName(collection, key.slice(0, key.indexOf("._id")));
     } else {
-        linkName = isLinkedField(collection, key);
+        linkName = getLinkName(collection, key);
     }
     if(linkName){
       const link = collection.getLink(null, linkName);
@@ -75,19 +77,23 @@ export const genFakeItem = ({
         currentRecursionDepth++;
         if(currentRecursionDepth > maxRecursionDepth){
             //console.log('recursion limit reached', linkName);
-            return;
+            return null;
         }
       }
-      const linkedFakeItem = genFakeItem({
-        collection: link.linkedCollection,
-        numArrayElements,
-        maxRecursionDepth,
-        currentRecursionDepth,
-      });
       
-      linksToDealWith.push({item: fakeItem, key});
-
-      return insertIntoCollection(link.linkedCollection, linkedFakeItem);
+      if('grabExisting' in link.linker.linkConfig){
+          return link.linkedCollection.findOne(link.linker.linkConfig.grabExisting)._id;
+      }
+      else{
+          const linkedFakeItem = genFakeItem({
+            collection: link.linkedCollection,
+            numArrayElements,
+            maxRecursionDepth,
+            currentRecursionDepth,
+          });
+          
+          return insertIntoCollection(link.linkedCollection, linkedFakeItem);
+      }
     }
     else if(schema[key].allowedValues){
       const val = faker.random.arrayElement(schema[key].allowedValues);
@@ -150,7 +156,7 @@ export const genFakeItem = ({
       }
 
       _.times(numArrayElements, (i) => {
-        const linkName = isLinkedField(collection, arrKey);
+        const linkName = getLinkName(collection, arrKey);
         if(theRestOfTheKey === ''){
           _.get(fakeItem,arrKey).push(parseKey(key));
         }
@@ -173,6 +179,14 @@ export const genFakeItem = ({
   return fakeItem;
 };
 
+let dbCleared = false;
+if(!dbCleared && Meteor.settings.SeedDatabase && Meteor.settings.clearDbBeforeSeed){
+    console.log('clearDbBeforeSeed set, clearing db');
+    resetDatabase();
+    dbCleared = true;
+}
+
+
 export const seedCollection = ({
     collection,
     numItemsPerCollection = 20,
@@ -181,10 +195,6 @@ export const seedCollection = ({
     mutators = [],
 } = {}) => {
   if(Meteor.settings.SeedDatabase){
-    if(Meteor.settings.clearDbBeforeSeed){
-        console.log('clearDbBeforeSeed set, clearing db');
-        resetDatabase();
-    }
       if(collection.find({}).count() === 0){
         console.log(`Seeding collection ${collection._name}`);
         _.times(numItemsPerCollection, () => {
