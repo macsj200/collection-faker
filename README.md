@@ -21,7 +21,7 @@ meteor add maxjohansen:collection-faker
 
 ## API Documentation
 
-- `seedCollection(options)`
+### `seedCollection(options)`
 Options configuration
 
 ```JavaScript
