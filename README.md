@@ -16,7 +16,7 @@
 ## Configuration
 1. Spin up your app, and pass it a settings file with `SeedDatabase` set to `true`
 
-2. Specify collections to seed with `[seedCollection(options)](#seedcollectionoptions)`
+2. Specify collections to seed with [seedCollection(options)](#seedcollectionoptions)
 
 
 ## API Documentation
