@@ -10,15 +10,14 @@
 
 2. Symlink the package into your app (or use `METEOR_PACKAGE_DIRS` environment variable)
 
+3. `meteor add maxjohansen:collection-faker`
+
+
 ## Configuration
 1. Spin up your app, and pass it a settings file with `SeedDatabase` set to `true`
 
-2. Specify collections to seed with `seedCollection(...)`
+2. Specify collections to seed with `[seedCollection(options)](#seedcollectionoptions)``
 
-To use, add this repo to `/packages`, then do
-```
-meteor add maxjohansen:collection-faker
-```
 
 ## API Documentation
 
