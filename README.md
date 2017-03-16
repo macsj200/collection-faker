@@ -5,6 +5,7 @@
 ## Installation
 
 1. Clone [my forked version of grapher](https://github.com/macsj200/grapher) branch `patch-1` (see [this PR](https://github.com/cult-of-coders/grapher/pull/97) for more info)
+
     `git clone git@github.com:macsj200/grapher.git`
 
 2. Symlink the package into your app (or use `METEOR_PACKAGE_DIRS` environment variable)
