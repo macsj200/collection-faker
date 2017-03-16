@@ -2,7 +2,13 @@
 
 ## fake meteor collections, with support for [grapher](https://github.com/cult-of-coders/grapher) links
 
-### For now, you're going to need to use [my forked version of grapher](https://github.com/macsj200/grapher) branch `patch-1` (see [this PR](https://github.com/cult-of-coders/grapher/pull/97) for more info)
+## Installation
+
+1. Clone [my forked version of grapher](https://github.com/macsj200/grapher) branch `patch-1` (see [this PR](https://github.com/cult-of-coders/grapher/pull/97) for more info)
+    `git clone git@github.com:macsj200/grapher.git`
+2. Symlink the package into your app (or use `METEOR_PACKAGE_DIRS` environment variable)
+3. Spin up your app, and pass it a settings file with `SeedDatabase` set to `true`
+4. Specify collections to seed with `seedCollection(...)`
 
 To use, add this repo to `/packages`, then do
 ```
