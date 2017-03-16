@@ -1,0 +1,6 @@
+{
+    "name":"tests",
+    "dependencies":{
+        "simpl-schema": "0.2.3"
+    }
+}
