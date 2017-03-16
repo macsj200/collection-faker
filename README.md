@@ -33,11 +33,11 @@ Options configuration
     mutators = [],
 }
 ```
-    * `collection` collection to seed
-    * `numItemsPerCollection` how many items to seed, **including** preseeded items
-    * `numArrayElements` how many elements to populate array keys with
-    * `preseed` Definitions of objects to seed the collection with first. Only keys that are **not** specified will be generated. I.E. if you specify a `name` attribute, `item.name === name`, and all other fields will be generated on `item`.
-    * `mutators` list of actions to perform after document insertion is complete. Specify `mutateSelector` mongo selection query object, and `mutate(item)` to specify logic.
+    - `collection` collection to seed
+    - `numItemsPerCollection` how many items to seed, **including*- preseeded items
+    - `numArrayElements` how many elements to populate array keys with
+    - `preseed` Definitions of objects to seed the collection with first. Only keys that are **not*- specified will be generated. I.E. if you specify a `name` attribute, `item.name === name`, and all other fields will be generated on `item`.
+    - `mutators` list of actions to perform after document insertion is complete. Specify `mutateSelector` mongo selection query object, and `mutate(item)` to specify logic.
 ---------------
 Sample usage
 ---------------
