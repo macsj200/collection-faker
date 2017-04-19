@@ -6,7 +6,7 @@ import { resetDatabase } from 'meteor/xolvio:cleaner';
 
 const insertIntoCollection = (collection, doc) => {
   let docId;
-  
+
   if(collection === Meteor.users){
     let email;
     let password = 'password';
@@ -80,9 +80,16 @@ export const genFakeItem = ({
             return null;
         }
       }
-      
+
       if('grabExisting' in link.linker.linkConfig){
-          return link.linkedCollection.findOne(link.linker.linkConfig.grabExisting)._id;
+          let N = link.linkedCollection.find().count();
+          let _id = link.linkedCollection.find(link.linker.linkConfig.grabExisting, {
+            skip: Math.floor(Math.random()*N),
+            limit: 1,
+          }).fetch()[0]._id;
+          console.log('seeding with ', _id, link.linkedCollection.findOne(_id));
+          return _id;
+          // return link.linkedCollection.findOne(link.linker.linkConfig.grabExisting)._id;
       }
       else{
           const linkedFakeItem = genFakeItem({
@@ -91,7 +98,7 @@ export const genFakeItem = ({
             maxRecursionDepth,
             currentRecursionDepth,
           });
-          
+
           return insertIntoCollection(link.linkedCollection, linkedFakeItem);
       }
     }
