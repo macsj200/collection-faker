@@ -82,12 +82,14 @@ export const genFakeItem = ({
       }
 
       if('grabExisting' in link.linker.linkConfig){
-          let N = link.linkedCollection.find().count();
-          let _id = link.linkedCollection.find(link.linker.linkConfig.grabExisting, {
+          let N = link.linkedCollection.find(link.linker.linkConfig.grabExisting).count();
+          let obj = link.linkedCollection.find(link.linker.linkConfig.grabExisting, {
             skip: Math.floor(Math.random()*N),
             limit: 1,
-          }).fetch()[0]._id;
-          console.log('seeding with ', _id, link.linkedCollection.findOne(_id));
+          }).fetch()[0];
+          let _id = obj._id;
+          // console.log('slurp',link.linker.linkConfig.grabExisting,obj);
+          //console.log('seeding with ', _id, link.linkedCollection.findOne(_id));
           return _id;
           // return link.linkedCollection.findOne(link.linker.linkConfig.grabExisting)._id;
       }
