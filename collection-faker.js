@@ -4,6 +4,7 @@ import {Meteor} from 'meteor/meteor';
 import _ from 'lodash';
 import { resetDatabase } from 'meteor/xolvio:cleaner';
 
+let imageCount = 0;
 const insertIntoCollection = (collection, doc) => {
   let docId;
 
@@ -110,7 +111,8 @@ export const genFakeItem = ({
     }
     else if(schema[key].type === String){
       if(key.toLowerCase().includes('image') || key.toLowerCase().includes('picture')){
-        return faker.image.image();
+        imageCount++;
+        return "https://unsplash.it/640/480" + "?image=" + imageCount;
       }
       else if(key === 'firstName'){
         return faker.name.firstName();
